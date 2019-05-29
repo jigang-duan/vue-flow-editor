@@ -164,7 +164,7 @@ export default {
       const canDelete = !!this.selectedLink || (this.movingSet && this.movingSet.length)
       const canCopy = this.movingSet && this.movingSet.filter(s => s.n).length
       const canPaste = this.copySet && this.copySet.length
-      const addGroup = this.movingSet && this.movingSet.filter(s => s.n).length
+      const addGroup = this.canAddGroup()
       const ungroup = this.movingSet && this.movingSet.filter(s => s.g).length
       return {
         copy: canCopy,
@@ -683,6 +683,23 @@ export default {
         this.movingSet = []
         this.copySet = []
       }
+    },
+    canAddGroup() {
+      if (this.movingSet) {
+        const nodeSet = this.movingSet.filter(s => s.n).map(it => it.n)
+        if (nodeSet.length) {
+          const ids = nodeSet.map(s => s.id)
+          const remvoeLinks = this.activeLinks.filter(line => {
+            const a = ids.includes(line.source.id)
+            const b = ids.includes(line.target.id)
+            return (a && !b) || (!a && b)
+          })
+          if (remvoeLinks.length === 0) {
+            return true
+          }
+        }
+      }
+      return false
     }
   }
 }
