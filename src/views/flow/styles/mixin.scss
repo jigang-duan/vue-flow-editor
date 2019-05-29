@@ -1,0 +1,34 @@
+@mixin component-border {
+  border: 1px solid $primary-border-color;
+  box-sizing: border-box;
+}
+
+@mixin sidbar {
+  position: absolute;
+  top: calc(50% - 26px);
+  padding: 15px 8px;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  color: #999;
+  text-align: center;
+  cursor: pointer;
+}
+
+@mixin component-footer {
+  border-top: 1px solid $primary-border-color;
+  background: $background-color;
+  text-align: right;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 25px;
+  line-height: 23px;
+  padding: 0 10px;
+  user-select: none;
+
+  .button-group:not(:last-child) {
+      margin-right: 5px;
+  }
+
+}
