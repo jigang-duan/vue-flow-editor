@@ -1,4 +1,5 @@
 // import request from '@/utils/request'
+import flatMap from 'lodash/flatMap'
 import { Groups, generateNodeByType, cloneNodes, generateGroup } from './flow.mock'
 
 // const BaseURL = 'http://192.168.10.235:3000/mock/34/flow'
@@ -41,7 +42,7 @@ export async function addGroup({ nodes, links }) {
 }
 
 export async function ungroup(groups) {
-  const nodes = groups.flatMap(g => g.content && g.content.nodes).filter(n => n)
-  const links = groups.flatMap(g => g.content && g.content.links).filter(l => l)
+  const nodes = flatMap(groups, g => g.content && g.content.nodes).filter(n => n)
+  const links = flatMap(groups, g => g.content && g.content.links).filter(l => l)
   return Promise.resolve({ nodes, links })
 }
