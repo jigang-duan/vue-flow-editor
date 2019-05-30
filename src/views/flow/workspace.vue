@@ -216,7 +216,7 @@ export default {
       } else if (name === 'paste') {
         await this.cloneNodes()
       } else if (name === 'addGroup') {
-        const nodeSet = this.movingSet.map(it => it.n)
+        const nodeSet = this.movingNodes.map(it => it.n)
         const ids = nodeSet.map(s => s.id)
         const links = this.activeLinks.filter(line => {
           return ids.includes(line.source.id) && ids.includes(line.target.id)
