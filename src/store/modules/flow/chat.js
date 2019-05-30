@@ -65,12 +65,11 @@ const actions = {
   setRemoteLinks({ dispatch, commit }, links) {
     commit('SET_LINKS', links)
   },
-  async addGroup({ dispatch, commit }, { nodes, links, remvoeLinks }) {
+  async addGroup({ dispatch, commit }, { nodes, links }) {
     const group = await addGroup({ nodes, links })
     commit('ADD_GROUPS', group)
     commit('REMOVE_PROCESSORS', nodes)
     commit('REMOVE_LINKS', links)
-    commit('REMOVE_LINKS', remvoeLinks)
   },
   async ungroup({ dispatch, commit }, groups) {
     const { nodes, links } = await ungroup(groups)

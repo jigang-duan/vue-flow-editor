@@ -160,12 +160,18 @@ export default {
     activeLinks() {
       return this.remoteLinks
     },
+    movingGroups() {
+      return this.movingSet.filter(s => s.g)
+    },
+    movingNodes() {
+      return this.movingSet.filter(s => s.n)
+    },
     tarbarActives() {
       const canDelete = !!this.selectedLink || (this.movingSet && this.movingSet.length)
-      const canCopy = this.movingSet && this.movingSet.filter(s => s.n).length
+      const canCopy = this.movingSet && this.movingNodes.length
       const canPaste = this.copySet && this.copySet.length
       const addGroup = this.canAddGroup()
-      const ungroup = this.movingSet && this.movingSet.filter(s => s.g).length
+      const ungroup = this.movingSet && this.movingGroups.length
       return {
         copy: canCopy,
         paste: canPaste,
@@ -202,11 +208,11 @@ export default {
       if (name === 'delete') {
         this.deleteNodesAndLines()
         if (this.movingSet && this.movingSet.length) {
-          const groups = this.movingSet.filter(s => s.g).map(s => s.g)
+          const groups = this.movingGroups.map(s => s.g)
           this.removeGroups(groups)
         }
       } else if (name === 'copy') {
-        this.copySet = this.movingSet.filter(s => s.n).map(it => it.n)
+        this.copySet = this.movingNodes.map(it => it.n)
       } else if (name === 'paste') {
         await this.cloneNodes()
       } else if (name === 'addGroup') {
@@ -215,12 +221,7 @@ export default {
         const links = this.activeLinks.filter(line => {
           return ids.includes(line.source.id) && ids.includes(line.target.id)
         })
-        const remvoeLinks = this.activeLinks.filter(line => {
-          const a = ids.includes(line.source.id)
-          const b = ids.includes(line.target.id)
-          return (a && !b) || (!a && b)
-        })
-        this.addGroup({ nodes: nodeSet, links, remvoeLinks })
+        this.addGroup({ nodes: nodeSet, links })
         this.movingSet = []
       } else if (name === 'ungroup') {
         const groups = this.movingSet.map(it => it.g)
@@ -677,16 +678,16 @@ export default {
         this.selectedLink = null
       }
       if (this.movingSet && this.movingSet.length) {
-        const ids = this.movingSet.filter(s => s.n).map(s => s.n.id)
+        const ids = this.movingNodes.map(s => s.n.id)
         this.setActiveLinks(this.activeLinks.filter(line => !(ids.includes(line.source.id) || ids.includes(line.target.id))))
-        this.removeProcessors(this.movingSet.filter(s => s.n).map(it => it.n))
+        this.removeProcessors(this.movingNodes.map(it => it.n))
         this.movingSet = []
         this.copySet = []
       }
     },
     canAddGroup() {
       if (this.movingSet) {
-        const nodeSet = this.movingSet.filter(s => s.n).map(it => it.n)
+        const nodeSet = this.movingNodes.map(it => it.n)
         if (nodeSet.length) {
           const ids = nodeSet.map(s => s.id)
           const remvoeLinks = this.activeLinks.filter(line => {
