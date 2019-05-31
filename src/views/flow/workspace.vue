@@ -195,7 +195,7 @@ export default {
     ...mapActions({
       getProcessGroup: 'getProcessGroup',
       newProcessor: 'newProcessor',
-      updateProcessors: 'updateProcessors',
+      updateContent: 'updateContent',
       newConnection: 'newConnection',
       clone: 'clone',
       remvoeContent: 'remvoeContent',
@@ -220,9 +220,9 @@ export default {
         let processors = []
         let groups = []
         if (this.movingNodes && this.movingNodes.length) {
-          const ids = this.movingNodes.map(s => s.n.id)
-          links = this.links.filter(l => ids.includes(l.source) || ids.includes(l.target))
-          processors = this.movingNodes.map(it => it.n)
+          const ids = this.movingNodes.map(s => s.n)
+          links = this.links.filter(l => ids.includes(l.source) || ids.includes(l.target)).map(l => l.id)
+          processors = ids
           this.movingSet = []
           this.copySet = []
         }
@@ -235,12 +235,11 @@ export default {
       } else if (name === 'paste') {
         await this.cloneNodes()
       } else if (name === 'addGroup') {
-        const nodeSet = this.movingNodes.map(it => it.n)
-        const ids = nodeSet.map(s => s.id)
-        const links = this.links.filter(line => {
-          return ids.includes(line.source) && ids.includes(line.target)
-        })
-        this.addGroup({ processors: nodeSet, links })
+        const ids = this.movingNodes.map(it => it.n)
+        const links = this.links
+          .filter(line => ids.includes(line.source) && ids.includes(line.target))
+          .map(l => l.id)
+        this.addGroup({ processors: ids, links })
         this.movingSet = []
       } else if (name === 'ungroup') {
         const groups = this.movingSet.map(it => it.g)
@@ -332,33 +331,43 @@ export default {
     },
     moveNode(mousePos, isGroup = false) {
       const attr = isGroup ? 'g' : 'n'
+      const nodes = isGroup ? this.groups : this.processors
       let minX = 0
       let minY = 0
       let maxX = this.spaceWidth
       let maxY = this.spaceHeight
-      const movingNoses = this.movingSet.filter(s => s[attr])
-      movingNoses.forEach(node => {
-        if (event.shiftKey) {
-          node[attr].ox = node[attr].x
-          node[attr].oy = node[attr].y
+      const movingNodes = this.movingSet.filter(s => s[attr])
+      movingNodes.forEach(node => {
+        // if (event.shiftKey) {
+        //   node[attr].ox = node[attr].x
+        //   node[attr].oy = node[attr].y
+        // }
+        const n = nodes.find(it => it.id === node[attr])
+        if (n) {
+          n.rect.x = mousePos.x + node.dx
+          n.rect.y = mousePos.y + node.dy
+          minX = Math.min(n.rect.x - n.rect.w / 2 - 5, minX)
+          minY = Math.min(n.rect.y - n.rect.h / 2 - 5, minY)
+          maxX = Math.max(n.rect.x + n.rect.w / 2 + 5, maxX)
+          maxY = Math.max(n.rect.y + n.rect.h / 2 + 5, maxY)
         }
-        node[attr].rect.x = mousePos.x + node.dx
-        node[attr].rect.y = mousePos.y + node.dy
-        minX = Math.min(node[attr].rect.x - node[attr].rect.w / 2 - 5, minX)
-        minY = Math.min(node[attr].rect.y - node[attr].rect.h / 2 - 5, minY)
-        maxX = Math.max(node[attr].rect.x + node[attr].rect.w / 2 + 5, maxX)
-        maxY = Math.max(node[attr].rect.y + node[attr].rect.h / 2 + 5, maxY)
       })
       if (minX !== 0 || minY !== 0) {
-        movingNoses.forEach(node => {
-          node[attr].rect.x -= minX
-          node[attr].rect.y -= minY
+        movingNodes.forEach(node => {
+          const n = nodes.find(it => it.id === node[attr])
+          if (n) {
+            n.rect.x -= minX
+            n.rect.y -= minY
+          }
         })
       }
       if (maxX !== this.spaceWidth || maxY !== this.spaceHeight) {
-        movingNoses.forEach(node => {
-          node[attr].rect.x -= maxX - this.spaceWidth
-          node[attr].rect.y -= maxY - this.spaceHeight
+        movingNodes.forEach(node => {
+          const n = nodes.find(it => it.id === node[attr])
+          if (n) {
+            n.rect.x -= maxX - this.spaceWidth
+            n.rect.y -= maxY - this.spaceHeight
+          }
         })
       }
     },
@@ -420,8 +429,7 @@ export default {
           }
           const selected = (n.rect.x > x && n.rect.x < x2 && n.rect.y > y && n.rect.y < y2)
           if (selected) {
-            this.movingSet.push({ n: n })
-            this.copySet = []
+            this.movingSet.push({ n: n.id })
           }
         })
         this.groups.forEach(g => {
@@ -430,11 +438,10 @@ export default {
           }
           const selected = (g.rect.x > x && g.rect.x < x2 && g.rect.y > y && g.rect.y < y2)
           if (selected) {
-            this.movingSet.push({ g: g })
-            this.copySet = []
+            this.movingSet.push({ g: g.id })
           }
         })
-
+        this.copySet = []
         this.lasso.show = false
       } else if (this.mouseMode === this.FLOW.state.DEFAULT) {
         this.clearSelection()
@@ -557,7 +564,9 @@ export default {
       if (d.id === this.mousedownNode.id) {
         if (this.mouseMode === this.FLOW.state.MOVING_ACTIVE) {
           if (this.movingNodes.length > 0) {
-            this.updateProcessors(this.movingNodes.map(n => n.n))
+            const processors = this.movingNodes.map(n => n.n)
+            const groups = this.movingGroups.map(n => n.g)
+            this.updateContent({ processors, groups })
           }
         }
         this.mouseMode = this.FLOW.state.DEFAULT
@@ -569,23 +578,22 @@ export default {
       this.mousedownNode = d
 
       if (this.isSelected(d) && (event.ctrlKey || event.metaKey)) {
-        this.movingSet = this.movingSet.filter(n => (n.n && n.n.id) !== this.mousedownNode.id)
+        this.movingSet = this.movingSet.filter(n => n.n !== d.id)
         this.copySet = []
       } else {
         if (event.shiftKey) {
           this.clearSelection()
-          const condes = getAllFlowNodes(this.mousedownNode, this.links, this.processors)
-          condes.forEach(node => {
-            this.movingSet.push({ n: node })
+          const condes = getAllFlowNodes(d, this.links, this.processors)
+          condes.forEach(n => {
+            this.movingSet.push({ n: n.id })
           })
-          this.copySet = []
         } else if (!this.isSelected(d)) {
           if (!event.ctrlKey && !event.metaKey) {
             this.clearSelection()
           }
-          this.movingSet.push({ n: this.mousedownNode })
-          this.copySet = []
+          this.movingSet.push({ n: d.id })
         }
+        this.copySet = []
         this.selectedLink = null
         if (event.button !== 2) {
           this.mouseMode = this.FLOW.state.MOVING
@@ -593,12 +601,14 @@ export default {
           mouse.x = mouse.x + d.rect.x - d.rect.w / 2
           mouse.y = mouse.y + d.rect.y - d.rect.h / 2
           this.movingSet.forEach(m => {
-            const attr = (m.n && 'n') || (m.g && 'g')
-            if (attr) {
-              m.ox = m[attr].rect.x
-              m.oy = m[attr].rect.y
-              m.dx = m[attr].rect.x - mouse.x
-              m.dy = m[attr].rect.y - mouse.y
+            const id = m.n || m.g
+            const nodes = (m.n && this.processors) || (m.g && this.groups)
+            const node = nodes.find(it => it.id === id)
+            if (id) {
+              m.ox = node.rect.x
+              m.oy = node.rect.y
+              m.dx = node.rect.x - mouse.x
+              m.dy = node.rect.y - mouse.y
             }
           })
           this.mouseOffset = calcMousePosition(event, document.body, this.scale)
@@ -609,6 +619,13 @@ export default {
     },
     groupMouseUp({ event, g }) {
       if (g.id === this.mousedownGroup.id) {
+        if (this.mouseMode === this.FLOW.state.MOVING_ACTIVE) {
+          if (this.movingGroups.length > 0) {
+            const processors = this.movingNodes.map(n => n.n)
+            const groups = this.movingGroups.map(n => n.g)
+            this.updateContent({ processors, groups })
+          }
+        }
         this.mouseMode = this.FLOW.state.DEFAULT
         event.stopPropagation()
         return
@@ -617,17 +634,17 @@ export default {
     groupMouseDown({ event, g }) {
       this.mousedownGroup = g
 
-      const isSelected = node => this.isSelected(node, true)
+      const isSelected = group => this.isSelected(group, true)
       if (isSelected(g) && (event.ctrlKey || event.metaKey)) {
-        this.movingSet = this.movingSet.filter(n => (n.g && n.g.id) !== this.mousedownGroup.id)
+        this.movingSet = this.movingSet.filter(n => n.g !== g.id)
       } else {
         if (!isSelected(g)) {
           if (!event.ctrlKey && !event.metaKey) {
             this.clearSelection()
           }
-          this.movingSet.push({ g: this.mousedownGroup })
-          this.copySet = []
+          this.movingSet.push({ g: g.id })
         }
+        this.copySet = []
         this.selectedLink = null
         if (event.button !== 2) {
           this.mouseMode = this.FLOW.state.MOVING
@@ -635,12 +652,14 @@ export default {
           mouse.x = mouse.x + g.rect.x - g.rect.w / 2
           mouse.y = mouse.y + g.rect.y - g.rect.h / 2
           this.movingSet.forEach(m => {
-            const attr = (m.n && 'n') || (m.g && 'g')
-            if (attr) {
-              m.ox = m[attr].rect.x
-              m.oy = m[attr].rect.y
-              m.dx = m[attr].rect.x - mouse.x
-              m.dy = m[attr].rect.y - mouse.y
+            const id = m.n || m.g
+            const nodes = (m.n && this.processors) || (m.g && this.groups)
+            const node = nodes.find(it => it.id === id)
+            if (id) {
+              m.ox = node.rect.x
+              m.oy = node.rect.y
+              m.dx = node.rect.x - mouse.x
+              m.dy = node.rect.y - mouse.y
             }
           })
           this.mouseOffset = calcMousePosition(event, document.body, this.scale)
@@ -665,26 +684,25 @@ export default {
     },
     isSelected(node, isGroup = false) {
       const attr = isGroup ? 'g' : 'n'
-      return this.movingSet.filter(s => s[attr]).map(it => it[attr].id).includes(node.id)
+      return this.movingSet.filter(s => s[attr]).map(it => it[attr]).includes(node.id)
     },
     async cloneNodes() {
-      const ids = this.copySet.map(s => s.id)
-      const links = this.links.filter(line => ids.includes(line.source) && ids.includes(line.target))
-      const clones = await this.clone({ processors: this.copySet, links })
+      const ids = this.copySet
+      const links = this.links.filter(line => ids.includes(line.source) && ids.includes(line.target)).map(l => l.id)
+      const clones = await this.clone({ processors: ids, links })
       this.movingSet = clones.map(it => ({ n: it }))
       this.copySet = []
     },
     canAddGroup() {
       if (this.movingSet) {
-        const nodeSet = this.movingNodes.map(it => it.n)
-        if (nodeSet.length) {
-          const ids = nodeSet.map(s => s.id)
-          const remvoeLinks = this.links.filter(line => {
+        const ids = this.movingNodes.map(it => it.n)
+        if (ids.length) {
+          const links = this.links.filter(line => {
             const a = ids.includes(line.source)
             const b = ids.includes(line.target)
             return (a && !b) || (!a && b)
           })
-          if (remvoeLinks.length === 0) {
+          if (links.length === 0) {
             return true
           }
         }

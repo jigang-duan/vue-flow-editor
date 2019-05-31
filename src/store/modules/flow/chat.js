@@ -1,12 +1,12 @@
 import {
   fetchProcessGroup,
   createProcessor,
-  updateProcessors,
+  updateContent,
   createConnection,
   clone,
   addGroup,
-  deleteContent,
-  ungroup
+  deleteContent
+  // ungroup
 } from '@/api/flow'
 
 const state = {
@@ -16,84 +16,55 @@ const state = {
 }
 
 const mutations = {
-  SET_PROCESSORS: (state, processors) => {
+  SET_PROCESS_GROUP: (state, { processors, links, groups }) => {
     state.processors = processors
-  },
-  ADD_PROCESSOR: (state, processor) => {
-    state.processors = [...state.processors, processor]
-  },
-  ADD_PROCESSORS: (state, processors) => {
-    state.processors = [...state.processors, ...processors]
-  },
-  SET_LINKS: (state, links) => {
     state.links = links
-  },
-  ADD_LINKS: (state, links) => {
-    state.links = [...state.links, ...links]
-  },
-  SET_GROUPS: (state, groups) => {
     state.groups = groups
-  },
-  ADD_GROUPS: (state, group) => {
-    state.groups = [...state.groups, group]
-  },
-  REMOVE_GROUPS: (state, groups) => {
-    state.groups = state.groups.filter(p => !groups.map(it => it.id).includes(p.id))
   }
 }
 
 const actions = {
-  async getProcessGroup({ dispatch, commit }) {
-    const { processors = [], links = [], groups = [] } = await fetchProcessGroup()
-    commit('SET_PROCESSORS', processors)
-    commit('SET_LINKS', links)
-    commit('SET_GROUPS', groups)
+  async getProcessGroup({ commit }) {
+    commit('SET_PROCESS_GROUP', await fetchProcessGroup())
   },
-  async newProcessor({ dispatch, commit }, { typeId, x, y, maxX, maxY }) {
-    const { processors = [], links = [], groups = [] } = await createProcessor(typeId, { x, y, maxX, maxY })
-    commit('SET_PROCESSORS', processors)
-    commit('SET_LINKS', links)
-    commit('SET_GROUPS', groups)
+  async newProcessor({ commit }, { typeId, x, y, maxX, maxY }) {
+    const updated = await createProcessor(typeId, { x, y, maxX, maxY })
+    commit('SET_PROCESS_GROUP', updated)
   },
-  async updateProcessors({ dispatch, commit }, ps) {
-    const { processors = [], links = [], groups = [] } = await updateProcessors(ps)
-    commit('SET_PROCESSORS', processors)
-    commit('SET_LINKS', links)
-    commit('SET_GROUPS', groups)
+  async updateContent({ state, commit }, payload) {
+    const processors = state.processors.filter(p => payload.processors.includes(p.id))
+    const groups = state.groups.filter(p => payload.groups.includes(p.id))
+    const updated = await updateContent({ processors, groups })
+    commit('SET_PROCESS_GROUP', updated)
   },
-  async newConnection({ dispatch, commit }, link) {
-    const { processors = [], links = [], groups = [] } = await createConnection(link)
-    commit('SET_PROCESSORS', processors)
-    commit('SET_LINKS', links)
-    commit('SET_GROUPS', groups)
+  async newConnection({ commit }, link) {
+    const updated = await createConnection(link)
+    commit('SET_PROCESS_GROUP', updated)
   },
-  async clone({ dispatch, state, commit }, { processors, links }) {
-    const { processors: oldPs = [] } = state
-    const { processors: ps = [], links: ls = [], groups = [] } = await clone({ processors, links })
-    commit('SET_PROCESSORS', ps)
-    commit('SET_LINKS', ls)
-    commit('SET_GROUPS', groups)
-    const oldids = oldPs.map(p => p.id)
-    return ps.filter(p => !oldids.includes(p.id))
+  async clone({ state, commit }, payload) {
+    const oldids = state.processors.map(p => p.id)
+    const processors = state.processors.filter(p => payload.processors.includes(p.id))
+    const links = state.links.filter(l => payload.links.includes(l.id))
+    const updated = await clone({ processors, links })
+    commit('SET_PROCESS_GROUP', updated)
+    return updated.processors.filter(p => !oldids.includes(p.id)).map(p => p.id)
   },
-  async addGroup({ dispatch, commit }, { processors, links }) {
-    const { processors: ps = [], links: ls = [], groups = [] } = await addGroup({ processors, links })
-    commit('SET_PROCESSORS', ps)
-    commit('SET_LINKS', ls)
-    commit('SET_GROUPS', groups)
+  async addGroup({ commit }, payload) {
+    const processors = state.processors.filter(p => payload.processors.includes(p.id))
+    const links = state.links.filter(link => payload.links.includes(link.id))
+    const updated = await addGroup({ processors, links })
+    commit('SET_PROCESS_GROUP', updated)
   },
-  async remvoeContent({ dispatch, commit }, { processors, links, groups }) {
-    const { processors: ps = [], links: ls = [], groups: gs = [] } = await deleteContent({ processors, links, groups })
-    commit('SET_PROCESSORS', ps)
-    commit('SET_LINKS', ls)
-    commit('SET_GROUPS', gs)
+  async remvoeContent({ commit }, { processors, links, groups }) {
+    const updated = await deleteContent({ processors, links, groups })
+    commit('SET_PROCESS_GROUP', updated)
   },
 
   async ungroup({ dispatch, commit }, groups) {
-    const { nodes, links } = await ungroup(groups)
-    commit('REMOVE_GROUPS', groups)
-    commit('ADD_PROCESSORS', nodes)
-    commit('ADD_LINKS', links)
+    // const { nodes, links } = await ungroup(groups)
+    // commit('REMOVE_GROUPS', groups)
+    // commit('ADD_PROCESSORS', nodes)
+    // commit('ADD_LINKS', links)
   }
 }
 

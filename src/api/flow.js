@@ -27,29 +27,10 @@ const mapProcessor = (p) => {
   }
 }
 
-// const mapConnection = (c, processors) => {
-//   const source = processors.find(p => p.id === c.sourceId)
-//   const target = processors.find(p => p.id === c.targetId)
-//   return {
-//     id: c.id,
-//     source,
-//     sourcePort: c.sourcePort,
-//     target
-//   }
-// }
-const mapConnection = c => {
-  return {
-    id: c.id,
-    source: c.sourceId,
-    sourcePort: c.sourcePort,
-    target: c.targetId
-  }
-}
-
 const mapProcessGroup = processGroup => {
   const { processors, connections, processGroups } = processGroup || {}
   const ps = processors && processors.map(mapProcessor) || []
-  const links = connections && connections.map(mapConnection) || []
+  const links = connections || []
   const groups = processGroups && processGroups.map(g => ({ ...g, count: g.processors && g.processors.length || 0 })) || []
   return {
     processors: ps,
@@ -89,11 +70,14 @@ export const createProcessor = async(typeId, { x, y, maxX, maxY }, groupId = 'ro
   return mapProcessGroup(processGroup)
 }
 
-export const updateProcessors = async(processors, groupId = 'root') => {
+export const updateContent = async({ processors, groups }, groupId = 'root') => {
   const processGroup = await request({
-    url: `${BaseURL}/process-groups/${groupId}/processors`,
+    url: `${BaseURL}/process-groups/${groupId}/content`,
     method: 'put',
-    data: processors
+    data: {
+      processors,
+      processGroups: groups
+    }
   })
   return mapProcessGroup(processGroup)
 }
@@ -103,65 +87,46 @@ export const createConnection = async({ source, sourcePort, target }, groupId = 
     url: `${BaseURL}/process-groups/${groupId}/connections`,
     method: 'post',
     data: {
-      sourceId: source.id,
-      sourcePort: sourcePort,
-      targetId: target.id
+      source: source.id,
+      sourcePort,
+      target: target.id
     }
   })
   return mapProcessGroup(processGroup)
 }
 
 export const clone = async({ processors, links }, groupId = 'root') => {
-  const connections = links.map(({ id, source, sourcePort, target }) => {
-    return {
-      id: id,
-      sourceId: source,
-      sourcePort: sourcePort,
-      targetId: target
-    }
-  })
   const processGroup = await request({
     url: `${BaseURL}/process-groups/${groupId}/clone`,
     method: 'put',
     data: {
       processors,
-      connections
+      connections: links
     }
   })
   return mapProcessGroup(processGroup)
 }
 
 export const addGroup = async({ processors, links }, groupId = 'root') => {
-  const connections = links.map(({ id, source, sourcePort, target }) => {
-    return {
-      id: id,
-      sourceId: source.id,
-      sourcePort: sourcePort,
-      targetId: target.id
-    }
-  })
   const processGroup = await request({
     url: `${BaseURL}/process-groups/${groupId}/process-groups`,
     method: 'post',
     data: {
       processors,
-      connections
+      connections: links
     }
   })
   return mapProcessGroup(processGroup)
 }
 
 export const deleteContent = async({ processors, links, groups }, groupId = 'root') => {
-  const pids = processors && processors.map(p => p.id) || []
-  const lids = links && links.map(l => l.id || l) || []
-  const gids = groups && groups.map(g => g.id) || []
   const processGroup = await request({
     url: `${BaseURL}/process-groups/${groupId}/content`,
     method: 'delete',
     data: {
-      processors: pids,
-      connections: lids,
-      processGroups: gids
+      processors,
+      connections: links,
+      processGroups: groups
     }
   })
   return mapProcessGroup(processGroup)
