@@ -1,7 +1,7 @@
 <template>
   <div class="flow-workspace">
     <header>
-      <tarbar :actives="tarbarActives" @tarbar-action="tarbarAction" />
+      <tarbar :actives="tarbarEnabled" @tarbar-action="tarbarAction" />
       <div>...</div>
     </header>
     <div ref="chart" class="chart" @drop="drop" @dragover.prevent>
@@ -25,10 +25,10 @@
             <flow-grid :spaceSize="spaceWidth" :gridSize="gridSize" />
             <g class="connections" pointer-events="stroke">
               <g
-                v-for="line in links"
+                v-for="line in lines"
                 :key="line.id"
                 class="link"
-                :class="{ 'link_selected': linkSelected(line) }"
+                :class="{ 'link_selected': selectedLink === line.id }"
               >
                 <path
                   class="link_background link_path"
@@ -77,7 +77,7 @@
               :height="lasso.height"
             />
             <g ref="dragGroup">
-              <path v-for="(line, key) in dragLines" :key="key" class="drag_line" :d="line.d" />
+              <path v-if="!!dragLine" class="drag_line" :d="dragLine.d" />
             </g>
           </g>
         </g>
@@ -105,7 +105,8 @@ import {
   calcMousePosition,
   mouseAtNode,
   generateLinkPath,
-  getAllFlowNodes
+  getAllFlowNodes,
+  computeLine
 } from './utils'
 import { FlowGrid, FlowNode, FlowGroup, Tarbar } from './components'
 
@@ -138,7 +139,7 @@ export default {
       mouseMode: this.FLOW.state.DEFAULT,
       movingSet: [],
       selectedLink: null,
-      dragLines: [],
+      dragLine: null,
       lasso: {
         show: false,
         ox: 0,
@@ -157,18 +158,21 @@ export default {
       links: state => state.links,
       groups: state => state.groups
     }),
+    lines() {
+      return computeLine(this.links, this.processors)
+    },
     movingGroups() {
       return this.movingSet.filter(s => s.g)
     },
     movingNodes() {
       return this.movingSet.filter(s => s.n)
     },
-    tarbarActives() {
-      const canDelete = !!this.selectedLink || (this.movingSet && this.movingSet.length)
-      const canCopy = this.movingSet && this.movingNodes.length
-      const canPaste = this.copySet && this.copySet.length
+    tarbarEnabled() {
+      const canDelete = !!this.selectedLink || !!(this.movingSet && this.movingSet.length)
+      const canCopy = !!(this.movingSet && this.movingNodes.length)
+      const canPaste = !!(this.copySet && this.copySet.length)
       const addGroup = this.canAddGroup()
-      const ungroup = this.movingSet && this.movingGroups.length
+      const ungroup = !!(this.movingSet && this.movingGroups.length)
       return {
         copy: canCopy,
         paste: canPaste,
@@ -176,6 +180,9 @@ export default {
         addGroup,
         ungroup
       }
+    },
+    dragLineNode() {
+      return this.dragLine && this.processors.find(p => p.id === this.dragLine.node)
     }
   },
   mounted() {
@@ -214,7 +221,7 @@ export default {
         let groups = []
         if (this.movingNodes && this.movingNodes.length) {
           const ids = this.movingNodes.map(s => s.n.id)
-          links = this.links.filter(l => ids.includes(l.source.id) || ids.includes(l.target.id))
+          links = this.links.filter(l => ids.includes(l.source) || ids.includes(l.target))
           processors = this.movingNodes.map(it => it.n)
           this.movingSet = []
           this.copySet = []
@@ -231,7 +238,7 @@ export default {
         const nodeSet = this.movingNodes.map(it => it.n)
         const ids = nodeSet.map(s => s.id)
         const links = this.links.filter(line => {
-          return ids.includes(line.source.id) && ids.includes(line.target.id)
+          return ids.includes(line.source) && ids.includes(line.target)
         })
         this.addGroup({ processors: nodeSet, links })
         this.movingSet = []
@@ -243,7 +250,7 @@ export default {
     linkMousedown(event, line) {
       this.mousedownLink = line
       this.clearSelection()
-      this.selectedLink = line
+      this.selectedLink = line.id
     },
     linkMouseup(event, line) {
     },
@@ -282,30 +289,23 @@ export default {
       let mousePos
       if (this.mouseMode === this.FLOW.state.JOINING ||
         this.mouseMode === this.FLOW.state.QUICK_JOINING) {
-        if (this.dragLines.length === 0 && this.mousedownPortType !== null) {
+        if (!this.dragLine && this.mousedownPortType !== null) {
           if (event.shiftKey) {
             console.info('DTDO')
           } else if (this.mousedownNode && !this.quickAddLink) {
-            this.showDragLines([{
-              node: this.mousedownNode,
+            this.dragLine = {
+              node: this.mousedownNode.id,
               portType: this.mousedownPortType,
               port: this.mousedownPortIndex
-            }])
+            }
           }
           this.selectedLink = null
         }
-        mousePos = this.mousePosition
-        this.dragLines = this.dragLines.map(dragline => {
-          const numOutputs = (dragline.portType === this.FLOW.VIEW.PORT_TYPE_OUTPUT) ? (dragline.node.outputs || 1) : 1
-          const sourcePort = dragline.port
-          const portY = -((numOutputs - 1) / 2) * 13 + 13 * sourcePort
-
-          const sc = (dragline.portType === this.FLOW.VIEW.PORT_TYPE_OUTPUT) ? 1 : -1
-          const origX = dragline.node.rect.x + sc * dragline.node.rect.w / 2
-          const origY = dragline.node.rect.y + portY
-          const d = generateLinkPath(origX, origY, mousePos.x, mousePos.y, sc)
-          return { ...dragline, d }
-        })
+        if (this.dragLine) {
+          mousePos = this.mousePosition
+          const d = this.calculateDragePath(this.dragLine, this.dragLineNode, mousePos)
+          this.dragLine = { ...this.dragLine, d }
+        }
         event.preventDefault()
       } else if (this.mouseMode === this.FLOW.state.MOVING) {
         mousePos = calcMousePosition(event, document.body, this.scale)
@@ -318,6 +318,17 @@ export default {
         this.moveNode(mousePos)
         this.moveNode(mousePos, true)
       }
+    },
+    calculateDragePath(dragline, node, mousePos) {
+      const numOutputs = (dragline.portType === this.FLOW.VIEW.PORT_TYPE_OUTPUT) ? (node.outputs || 1) : 1
+      const sourcePort = dragline.port
+      const portY = -((numOutputs - 1) / 2) * 13 + 13 * sourcePort
+
+      const sc = (dragline.portType === this.FLOW.VIEW.PORT_TYPE_OUTPUT) ? 1 : -1
+      const origX = node.rect.x + sc * node.rect.w / 2
+      const origY = node.rect.y + portY
+      const d = generateLinkPath(origX, origY, mousePos.x, mousePos.y, sc)
+      return d
     },
     moveNode(mousePos, isGroup = false) {
       const attr = isGroup ? 'g' : 'n'
@@ -393,9 +404,7 @@ export default {
         return
       }
       if (this.mousedownNode && this.mouseMode === this.FLOW.state.JOINING) {
-        const removedLinks = this.dragLines.filter(line => line.link).map(line => line.link)
-        console.debug(removedLinks)
-        this.hideDragLines()
+        this.dragLine = null
       }
       if (this.lasso.show) {
         const x = this.lasso.x
@@ -449,15 +458,8 @@ export default {
     portMouseOver({ event, portType, d, portIndex }) {
       if (this.mouseMode === this.FLOW.state.JOINING ||
         this.mouseMode === this.FLOW.state.QUICK_JOINING) {
-        if ((this.dragLines && this.dragLines.length > 0)) {
-          let active = false
-          this.dragLines.forEach(dragLine => {
-            if (portType !== dragLine.portType &&
-              d.id !== dragLine.node.id) {
-              active = true
-            }
-          })
-          if (!active) {
+        if (this.dragLine) {
+          if (portType === this.dragLine.portType || d.id === this.dragLine.node) {
             event.stopPropagation()
             event.preventDefault()
             return
@@ -505,8 +507,7 @@ export default {
       event.preventDefault()
     },
     portMouseUp({ event, portType, d, portIndex }) {
-      if (this.mouseMode === this.FLOW.state.QUICK_JOINING &&
-        (this.dragLines && this.dragLines.length > 0)) {
+      if (this.mouseMode === this.FLOW.state.QUICK_JOINING && this.dragLine) {
         console.info('DOTO')
       }
 
@@ -519,23 +520,22 @@ export default {
         }
 
         let addedLinks = []
-        // const removedLinks = this.dragLines.filter(line => line.link).map(line => line.link)
 
-        this.dragLines.forEach(dragLine => {
-          if (portType !== dragLine.portType && this.mouseupNode.id !== dragLine.node.id) {
+        if (this.dragLine) {
+          if (portType !== this.dragLine.portType && this.mouseupNode.id !== this.dragLine.node) {
             let src, dst, srcPort
-            if (dragLine.portType === this.FLOW.VIEW.PORT_TYPE_OUTPUT) {
-              src = dragLine.node
-              srcPort = dragLine.port
+            if (this.dragLine.portType === this.FLOW.VIEW.PORT_TYPE_OUTPUT) {
+              src = this.dragLineNode
+              srcPort = this.dragLine.port
               dst = this.mouseupNode
-            } else if (dragLine.portType === this.FLOW.VIEW.PORT_TYPE_INPUT) {
+            } else if (this.dragLine.portType === this.FLOW.VIEW.PORT_TYPE_INPUT) {
               src = this.mouseupNode
-              dst = dragLine.node
+              dst = this.dragLineNode
               srcPort = portIndex
             }
             const linkId = `${src.id}:${srcPort}:${dst.id}`
             const link = { id: linkId, source: src, sourcePort: srcPort, target: dst }
-            if (dragLine.virtualLink) {
+            if (this.dragLine.virtualLink) {
               console.info('DOTO')
             } else {
               if (this.links.findIndex(line => line.id === link.id) === -1) {
@@ -543,14 +543,14 @@ export default {
               }
             }
           }
-        })
+        }
         if (addedLinks.length > 0) {
           this.newConnection(addedLinks[0])
         }
       }
 
       this.resetMouseVars()
-      this.hideDragLines()
+      this.dragLine = null
       event.preventDefault()
     },
     nodeMouseUp({ event, d }) {
@@ -574,7 +574,7 @@ export default {
       } else {
         if (event.shiftKey) {
           this.clearSelection()
-          const condes = getAllFlowNodes(this.mousedownNode, this.links)
+          const condes = getAllFlowNodes(this.mousedownNode, this.links, this.processors)
           condes.forEach(node => {
             this.movingSet.push({ n: node })
           })
@@ -653,12 +653,6 @@ export default {
       this.movingSet = []
       this.selectedLink = null
     },
-    showDragLines(nodes) {
-      this.dragLines = [...this.dragLines, ...nodes]
-    },
-    hideDragLines() {
-      this.dragLines = []
-    },
     resetMouseVars() {
       this.mousedownNode = null
       this.mousedownGroup = null
@@ -669,16 +663,13 @@ export default {
       this.activeSpliceLink = null
       this.spliceActive = false
     },
-    linkSelected(line) {
-      return this.selectedLink && this.selectedLink.id === line.id
-    },
     isSelected(node, isGroup = false) {
       const attr = isGroup ? 'g' : 'n'
       return this.movingSet.filter(s => s[attr]).map(it => it[attr].id).includes(node.id)
     },
     async cloneNodes() {
       const ids = this.copySet.map(s => s.id)
-      const links = this.links.filter(line => (ids.includes(line.source.id) && ids.includes(line.target.id)))
+      const links = this.links.filter(line => ids.includes(line.source) && ids.includes(line.target))
       const clones = await this.clone({ processors: this.copySet, links })
       this.movingSet = clones.map(it => ({ n: it }))
       this.copySet = []
@@ -689,8 +680,8 @@ export default {
         if (nodeSet.length) {
           const ids = nodeSet.map(s => s.id)
           const remvoeLinks = this.links.filter(line => {
-            const a = ids.includes(line.source.id)
-            const b = ids.includes(line.target.id)
+            const a = ids.includes(line.source)
+            const b = ids.includes(line.target)
             return (a && !b) || (!a && b)
           })
           if (remvoeLinks.length === 0) {

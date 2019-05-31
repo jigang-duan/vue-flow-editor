@@ -101,19 +101,19 @@ export const generateLinkPath = (origX, origY, destX, destY, sc) => {
   }
 }
 
-export const getAllFlowNodes = (node, links) => {
+export const getAllFlowNodes = (node, links, nodes) => {
   const visited = {}
   visited[node.id] = true
   const nns = [node]
   const stack = [node]
   while (stack.length !== 0) {
     const n = stack.shift()
-    const childLinks = links.filter(d => (d.source.id === n.id) || (d.target.id === n.id))
+    const childLinks = links.filter(link => (link.source === n.id) || (link.target === n.id))
     childLinks.forEach(childLink => {
-      const child = (childLink.source.id === n.id) ? childLink.target : childLink.source
-      let id = child.id
+      let id = (childLink.source === n.id) ? childLink.target : childLink.source
+      const child = nodes.find(n => n.id === id)
       if (!id) {
-        id = `${child.source.id}:${child.sourcePort}:${child.target.id}`
+        id = `${child.source}:${child.sourcePort}:${child.target}`
       }
       if (!visited[id]) {
         visited[id] = true
@@ -123,4 +123,15 @@ export const getAllFlowNodes = (node, links) => {
     })
   }
   return nns
+}
+
+export const computeLine = (links, nodes) => {
+  return links.map(link => {
+    return {
+      id: link.id,
+      sourcePort: link.sourcePort,
+      source: nodes.find(node => node.id === link.source),
+      target: nodes.find(node => node.id === link.target)
+    }
+  }).filter(link => link.source && link.target && link.source.id && link.target.id)
 }

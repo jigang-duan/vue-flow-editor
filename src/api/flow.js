@@ -27,21 +27,29 @@ const mapProcessor = (p) => {
   }
 }
 
-const mapConnection = (c, processors) => {
-  const source = processors.find(p => p.id === c.sourceId)
-  const target = processors.find(p => p.id === c.targetId)
+// const mapConnection = (c, processors) => {
+//   const source = processors.find(p => p.id === c.sourceId)
+//   const target = processors.find(p => p.id === c.targetId)
+//   return {
+//     id: c.id,
+//     source,
+//     sourcePort: c.sourcePort,
+//     target
+//   }
+// }
+const mapConnection = c => {
   return {
     id: c.id,
-    source,
+    source: c.sourceId,
     sourcePort: c.sourcePort,
-    target
+    target: c.targetId
   }
 }
 
 const mapProcessGroup = processGroup => {
   const { processors, connections, processGroups } = processGroup || {}
   const ps = processors && processors.map(mapProcessor) || []
-  const links = connections && connections.map(c => mapConnection(c, ps)) || []
+  const links = connections && connections.map(mapConnection) || []
   const groups = processGroups && processGroups.map(g => ({ ...g, count: g.processors && g.processors.length || 0 })) || []
   return {
     processors: ps,
@@ -107,9 +115,9 @@ export const clone = async({ processors, links }, groupId = 'root') => {
   const connections = links.map(({ id, source, sourcePort, target }) => {
     return {
       id: id,
-      sourceId: source.id,
+      sourceId: source,
       sourcePort: sourcePort,
-      targetId: target.id
+      targetId: target
     }
   })
   const processGroup = await request({
@@ -145,7 +153,7 @@ export const addGroup = async({ processors, links }, groupId = 'root') => {
 
 export const deleteContent = async({ processors, links, groups }, groupId = 'root') => {
   const pids = processors && processors.map(p => p.id) || []
-  const lids = links && links.map(l => l.id) || []
+  const lids = links && links.map(l => l.id || l) || []
   const gids = groups && groups.map(g => g.id) || []
   const processGroup = await request({
     url: `${BaseURL}/process-groups/${groupId}/content`,
