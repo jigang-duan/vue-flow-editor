@@ -1,6 +1,5 @@
 import request from '@/utils/request'
 import flatMap from 'lodash/flatMap'
-import { cloneNodes, generateGroup } from './flow.mock'
 
 // const BaseURL = 'http://192.168.10.235:3000/mock/32/flow'
 const BaseURL = 'http://localhost:8080/flow'
@@ -40,12 +39,14 @@ const mapConnection = (c, processors) => {
 }
 
 const mapProcessGroup = processGroup => {
-  const { processors = [], connections = [] } = processGroup || {}
+  const { processors, connections, processGroups } = processGroup || {}
   const ps = processors && processors.map(mapProcessor) || []
   const links = connections && connections.map(c => mapConnection(c, ps)) || []
+  const groups = processGroups && processGroups.map(g => ({ ...g, count: g.processors && g.processors.length || 0 })) || []
   return {
     processors: ps,
-    links
+    links,
+    groups
   }
 }
 
@@ -123,8 +124,9 @@ export const deleteConnections = async(links, groupId = 'root') => {
 }
 
 export const clone = async({ processors, links }, groupId = 'root') => {
-  const connections = links.map(({ source, sourcePort, target }) => {
+  const connections = links.map(({ id, source, sourcePort, target }) => {
     return {
+      id: id,
       sourceId: source.id,
       sourcePort: sourcePort,
       targetId: target.id
@@ -141,8 +143,40 @@ export const clone = async({ processors, links }, groupId = 'root') => {
   return mapProcessGroup(processGroup)
 }
 
-export async function addGroup({ nodes, links }) {
-  return Promise.resolve(generateGroup({ nodes, links }))
+export const addGroup = async({ processors, links }, groupId = 'root') => {
+  const connections = links.map(({ id, source, sourcePort, target }) => {
+    return {
+      id: id,
+      sourceId: source.id,
+      sourcePort: sourcePort,
+      targetId: target.id
+    }
+  })
+  const processGroup = await request({
+    url: `${BaseURL}/process-groups/${groupId}/process-groups`,
+    method: 'post',
+    data: {
+      processors,
+      connections
+    }
+  })
+  return mapProcessGroup(processGroup)
+}
+
+export const deleteContent = async({ processors, links, groups }, groupId = 'root') => {
+  const pids = processors && processors.map(p => p.id) || []
+  const lids = links && links.map(l => l.id) || []
+  const gids = groups && groups.map(g => g.id) || []
+  const processGroup = await request({
+    url: `${BaseURL}/process-groups/${groupId}/content`,
+    method: 'delete',
+    data: {
+      processors: pids,
+      connections: lids,
+      processGroups: gids
+    }
+  })
+  return mapProcessGroup(processGroup)
 }
 
 export async function ungroup(groups) {

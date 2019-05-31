@@ -67,7 +67,8 @@ export default {
           icon: 'icons/node-red/folder.png',
           style: {
             color: 'RGBA(242, 244, 245, 1.00)'
-          }
+          },
+          count: 0
         }
       }
     },
@@ -90,7 +91,10 @@ export default {
       return this.value.rect.y - this.value.rect.h / 2
     },
     nodeCount: function() {
-      return this.value.content && this.value.content.nodes && this.value.content.nodes.length || 0
+      if (this.value.content) {
+        return this.value.content.nodes && this.value.content.nodes.length || 0
+      }
+      return this.value.count
     }
   },
   methods: {

@@ -196,6 +196,7 @@ export default {
       newConnection: 'newConnection',
       removeLinks: 'removeLinks',
       clone: 'clone',
+      deleteContent: 'deleteContent',
 
       addGroup: 'addGroup',
       ungroup: 'ungroup',
@@ -212,7 +213,7 @@ export default {
         this.deleteNodesAndLines()
         if (this.movingSet && this.movingSet.length) {
           const groups = this.movingGroups.map(s => s.g)
-          this.removeGroups(groups)
+          this.deleteContent({ groups })
         }
       } else if (name === 'copy') {
         this.copySet = this.movingNodes.map(it => it.n)
@@ -224,7 +225,7 @@ export default {
         const links = this.activeLinks.filter(line => {
           return ids.includes(line.source.id) && ids.includes(line.target.id)
         })
-        this.addGroup({ nodes: nodeSet, links })
+        this.addGroup({ processors: nodeSet, links })
         this.movingSet = []
       } else if (name === 'ungroup') {
         const groups = this.movingSet.map(it => it.g)
