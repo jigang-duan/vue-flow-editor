@@ -2,9 +2,7 @@ import {
   fetchProcessGroup,
   createProcessor,
   updateProcessors,
-  deleteProcessors,
   createConnection,
-  deleteConnections,
   clone,
   addGroup,
   deleteContent,
@@ -69,18 +67,6 @@ const actions = {
     commit('SET_LINKS', links)
     commit('SET_GROUPS', groups)
   },
-  async removeLinks({ dispatch, commit }, lines) {
-    const { processors = [], links = [], groups = [] } = await deleteConnections(lines)
-    commit('SET_PROCESSORS', processors)
-    commit('SET_LINKS', links)
-    commit('SET_GROUPS', groups)
-  },
-  async removeProcessors({ dispatch, commit }, ps) {
-    const { processors = [], links = [], groups = [] } = await deleteProcessors(ps)
-    commit('SET_PROCESSORS', processors)
-    commit('SET_LINKS', links)
-    commit('SET_GROUPS', groups)
-  },
   async clone({ dispatch, state, commit }, { processors, links }) {
     const { processors: oldPs = [] } = state
     const { processors: ps = [], links: ls = [], groups = [] } = await clone({ processors, links })
@@ -96,7 +82,7 @@ const actions = {
     commit('SET_LINKS', ls)
     commit('SET_GROUPS', groups)
   },
-  async deleteContent({ dispatch, commit }, { processors, links, groups }) {
+  async remvoeContent({ dispatch, commit }, { processors, links, groups }) {
     const { processors: ps = [], links: ls = [], groups: gs = [] } = await deleteContent({ processors, links, groups })
     commit('SET_PROCESSORS', ps)
     commit('SET_LINKS', ls)
@@ -108,9 +94,6 @@ const actions = {
     commit('REMOVE_GROUPS', groups)
     commit('ADD_PROCESSORS', nodes)
     commit('ADD_LINKS', links)
-  },
-  removeGroups({ dispatch, commit }, groups) {
-    commit('REMOVE_GROUPS', groups)
   }
 }
 

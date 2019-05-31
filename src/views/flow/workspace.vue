@@ -191,16 +191,13 @@ export default {
     ...mapActions({
       getProcessGroup: 'getProcessGroup',
       newProcessor: 'newProcessor',
-      removeProcessors: 'removeProcessors',
       updateProcessors: 'updateProcessors',
       newConnection: 'newConnection',
-      removeLinks: 'removeLinks',
       clone: 'clone',
-      deleteContent: 'deleteContent',
+      remvoeContent: 'remvoeContent',
 
       addGroup: 'addGroup',
-      ungroup: 'ungroup',
-      removeGroups: 'removeGroups'
+      ungroup: 'ungroup'
     }),
     drop(event) {
       const { typeId, x, y } = nodeInfoByEvent(event)
@@ -210,11 +207,26 @@ export default {
     },
     async tarbarAction(name) {
       if (name === 'delete') {
-        this.deleteNodesAndLines()
-        if (this.movingSet && this.movingSet.length) {
-          const groups = this.movingGroups.map(s => s.g)
-          this.deleteContent({ groups })
+        if (this.selectedLink) {
+          this.remvoeContent({ links: [this.selectedLink] })
+          this.selectedLink = null
+          return
         }
+        let links = []
+        let processors = []
+        let groups = []
+        if (this.movingNodes && this.movingNodes.length) {
+          const ids = this.movingNodes.map(s => s.n.id)
+          links = this.activeLinks.filter(l => ids.includes(l.source.id) || ids.includes(l.target.id))
+          processors = this.movingNodes.map(it => it.n)
+          this.movingSet = []
+          this.copySet = []
+        }
+        if (this.movingSet && this.movingSet.length) {
+          groups = this.movingGroups.map(s => s.g)
+        }
+        this.remvoeContent({ processors, links, groups })
+
       } else if (name === 'copy') {
         this.copySet = this.movingNodes.map(it => it.n)
       } else if (name === 'paste') {
@@ -674,22 +686,6 @@ export default {
       const clones = await this.clone({ processors: this.copySet, links })
       this.movingSet = clones.map(it => ({ n: it }))
       this.copySet = []
-    },
-    deleteNodesAndLines() {
-      if (this.selectedLink) {
-        this.removeLinks([this.selectedLink])
-        this.selectedLink = null
-      }
-      if (this.movingNodes && this.movingNodes.length) {
-        const ids = this.movingNodes.map(s => s.n.id)
-        const rmLinks = this.activeLinks.filter(l => ids.includes(l.source.id) || ids.includes(l.target.id))
-        if (rmLinks.length > 0) {
-          this.removeLinks(rmLinks)
-        }
-        this.removeProcessors(this.movingNodes.map(it => it.n))
-        this.movingSet = []
-        this.copySet = []
-      }
     },
     canAddGroup() {
       if (this.movingSet) {

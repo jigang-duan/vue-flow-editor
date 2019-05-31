@@ -90,16 +90,6 @@ export const updateProcessors = async(processors, groupId = 'root') => {
   return mapProcessGroup(processGroup)
 }
 
-export const deleteProcessors = async(processors, groupId = 'root') => {
-  const ids = processors.map(p => p.id)
-  const processGroup = await request({
-    url: `${BaseURL}/process-groups/${groupId}/processors`,
-    method: 'delete',
-    data: ids
-  })
-  return mapProcessGroup(processGroup)
-}
-
 export const createConnection = async({ source, sourcePort, target }, groupId = 'root') => {
   const processGroup = await request({
     url: `${BaseURL}/process-groups/${groupId}/connections`,
@@ -109,16 +99,6 @@ export const createConnection = async({ source, sourcePort, target }, groupId = 
       sourcePort: sourcePort,
       targetId: target.id
     }
-  })
-  return mapProcessGroup(processGroup)
-}
-
-export const deleteConnections = async(links, groupId = 'root') => {
-  const linkIds = links.map(l => l.id)
-  const processGroup = await request({
-    url: `${BaseURL}/process-groups/${groupId}/connections`,
-    method: 'delete',
-    data: linkIds
   })
   return mapProcessGroup(processGroup)
 }
