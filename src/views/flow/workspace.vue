@@ -25,7 +25,7 @@
             <flow-grid :spaceSize="spaceWidth" :gridSize="gridSize" />
             <g class="connections" pointer-events="stroke">
               <g
-                v-for="line in activeLinks"
+                v-for="line in links"
                 :key="line.id"
                 class="link"
                 :class="{ 'link_selected': linkSelected(line) }"
@@ -42,10 +42,10 @@
             </g>
             <g class="processors" pointer-events="all">
               <flow-node
-                v-for="p in processors"
-                :key="p.id"
-                :value="p"
-                :selected="isSelected(p)"
+                v-for="processor in processors"
+                :key="processor.id"
+                :value="processor"
+                :selected="isSelected(processor)"
                 @portMouseOver="portMouseOver"
                 @portMouseOut="portMouseOut"
                 @nodeMouseDown="nodeMouseDown"
@@ -154,12 +154,9 @@ export default {
   computed: {
     ...mapState({
       processors: state => state.processors,
-      remoteLinks: state => state.links,
+      links: state => state.links,
       groups: state => state.groups
     }),
-    activeLinks() {
-      return this.remoteLinks
-    },
     movingGroups() {
       return this.movingSet.filter(s => s.g)
     },
@@ -217,7 +214,7 @@ export default {
         let groups = []
         if (this.movingNodes && this.movingNodes.length) {
           const ids = this.movingNodes.map(s => s.n.id)
-          links = this.activeLinks.filter(l => ids.includes(l.source.id) || ids.includes(l.target.id))
+          links = this.links.filter(l => ids.includes(l.source.id) || ids.includes(l.target.id))
           processors = this.movingNodes.map(it => it.n)
           this.movingSet = []
           this.copySet = []
@@ -226,7 +223,6 @@ export default {
           groups = this.movingGroups.map(s => s.g)
         }
         this.remvoeContent({ processors, links, groups })
-
       } else if (name === 'copy') {
         this.copySet = this.movingNodes.map(it => it.n)
       } else if (name === 'paste') {
@@ -234,7 +230,7 @@ export default {
       } else if (name === 'addGroup') {
         const nodeSet = this.movingNodes.map(it => it.n)
         const ids = nodeSet.map(s => s.id)
-        const links = this.activeLinks.filter(line => {
+        const links = this.links.filter(line => {
           return ids.includes(line.source.id) && ids.includes(line.target.id)
         })
         this.addGroup({ processors: nodeSet, links })
@@ -542,7 +538,7 @@ export default {
             if (dragLine.virtualLink) {
               console.info('DOTO')
             } else {
-              if (this.activeLinks.findIndex(line => line.id === link.id) === -1) {
+              if (this.links.findIndex(line => line.id === link.id) === -1) {
                 addedLinks = [...addedLinks, link]
               }
             }
@@ -578,7 +574,7 @@ export default {
       } else {
         if (event.shiftKey) {
           this.clearSelection()
-          const condes = getAllFlowNodes(this.mousedownNode, this.activeLinks)
+          const condes = getAllFlowNodes(this.mousedownNode, this.links)
           condes.forEach(node => {
             this.movingSet.push({ n: node })
           })
@@ -682,7 +678,7 @@ export default {
     },
     async cloneNodes() {
       const ids = this.copySet.map(s => s.id)
-      const links = this.activeLinks.filter(line => (ids.includes(line.source.id) && ids.includes(line.target.id)))
+      const links = this.links.filter(line => (ids.includes(line.source.id) && ids.includes(line.target.id)))
       const clones = await this.clone({ processors: this.copySet, links })
       this.movingSet = clones.map(it => ({ n: it }))
       this.copySet = []
@@ -692,7 +688,7 @@ export default {
         const nodeSet = this.movingNodes.map(it => it.n)
         if (nodeSet.length) {
           const ids = nodeSet.map(s => s.id)
-          const remvoeLinks = this.activeLinks.filter(line => {
+          const remvoeLinks = this.links.filter(line => {
             const a = ids.includes(line.source.id)
             const b = ids.includes(line.target.id)
             return (a && !b) || (!a && b)
