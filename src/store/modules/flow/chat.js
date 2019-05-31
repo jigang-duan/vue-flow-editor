@@ -1,4 +1,14 @@
-import { getProcessors, newProcessor, cloneProcessors, addGroup, ungroup } from '@/api/flow'
+import {
+  fetchProcessGroup,
+  createProcessor,
+  updateProcessors,
+  deleteProcessors,
+  createConnection,
+  deleteConnections,
+  clone,
+  addGroup,
+  ungroup
+} from '@/api/flow'
 
 const state = {
   processors: [],
@@ -37,34 +47,45 @@ const mutations = {
 }
 
 const actions = {
-  async getProcessors({ dispatch, commit }) {
-    try {
-      commit('SET_PROCESSORS', await getProcessors())
-    } catch (error) {
-      console.warn(error)
-    }
-  },
-  setProcessors({ dispatch, commit }, processors) {
+  async getProcessGroup({ dispatch, commit }) {
+    const { processors = [], links = [] } = await fetchProcessGroup()
     commit('SET_PROCESSORS', processors)
-  },
-  async newProcessor({ dispatch, commit }, { typeId, x, y, maxX, maxY }) {
-    try {
-      commit('ADD_PROCESSOR', await newProcessor(typeId, x, y, maxX, maxY))
-    } catch (error) {
-      console.warn(error)
-    }
-  },
-  removeProcessors({ dispatch, commit }, processors) {
-    commit('REMOVE_PROCESSORS', processors)
-  },
-  async cloneProcessors({ dispatch, commit }, processors) {
-    const clones = await cloneProcessors(processors)
-    commit('ADD_PROCESSORS', clones)
-    return clones
-  },
-  setRemoteLinks({ dispatch, commit }, links) {
     commit('SET_LINKS', links)
   },
+  async newProcessor({ dispatch, commit }, { typeId, x, y, maxX, maxY }) {
+    const { processors = [], links = [] } = await createProcessor(typeId, { x, y, maxX, maxY })
+    commit('SET_PROCESSORS', processors)
+    commit('SET_LINKS', links)
+  },
+  async updateProcessors({ dispatch, commit }, ps) {
+    const { processors = [], links = [] } = await updateProcessors(ps)
+    commit('SET_PROCESSORS', processors)
+    commit('SET_LINKS', links)
+  },
+  async newConnection({ dispatch, commit }, link) {
+    const { processors = [], links = [] } = await createConnection(link)
+    commit('SET_PROCESSORS', processors)
+    commit('SET_LINKS', links)
+  },
+  async removeLinks({ dispatch, commit }, lines) {
+    const { processors = [], links = [] } = await deleteConnections(lines)
+    commit('SET_PROCESSORS', processors)
+    commit('SET_LINKS', links)
+  },
+  async removeProcessors({ dispatch, commit }, ps) {
+    const { processors = [], links = [] } = await deleteProcessors(ps)
+    commit('SET_PROCESSORS', processors)
+    commit('SET_LINKS', links)
+  },
+  async clone({ dispatch, state, commit }, { processors, links }) {
+    const { processors: oldPs = [] } = state
+    const { processors: ps = [], links: ls = [] } = await clone({ processors, links })
+    commit('SET_PROCESSORS', ps)
+    commit('SET_LINKS', ls)
+    const oldids = oldPs.map(p => p.id)
+    return ps.filter(p => !oldids.includes(p.id))
+  },
+
   async addGroup({ dispatch, commit }, { nodes, links }) {
     const group = await addGroup({ nodes, links })
     commit('ADD_GROUPS', group)

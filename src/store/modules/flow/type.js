@@ -1,19 +1,19 @@
-import { getGroups } from '@/api/flow'
+import { fetchProcessorTypes } from '@/api/flow'
 
 const state = {
-  groups: []
+  types: []
 }
 
 const mutations = {
-  SET_GROUPS: (state, groups) => {
-    state.groups = groups
+  SET_TYPES: (state, types) => {
+    state.types = types
   }
 }
 
 const actions = {
-  async getGroups({ dispatch, commit }) {
+  async getTypes({ dispatch, commit }) {
     try {
-      commit('SET_GROUPS', await getGroups())
+      commit('SET_TYPES', await fetchProcessorTypes())
     } catch (error) {
       console.warn(error)
     }

@@ -5,7 +5,7 @@ export const Groups = [
     'id': 'fdCD6BD6-C5Bb-ECdb-6647-b8FDfe8eBa64',
     'title': '连接器',
     'name': 'Connector',
-    'nodes': [
+    'items': [
       {
         'id': '76DA30b6-61BF-75AF-AfFc-d2FdB9AdC874',
         'name': 'MySQL',
@@ -48,7 +48,7 @@ export const Groups = [
     'id': '18Ed9dB5-F3B1-6c83-4de6-d7BcBbA2c84c',
     'title': '转换器',
     'name': 'Converter',
-    'nodes': [
+    'items': [
       {
         'id': '871155A1-e8EE-D3Fc-CFcC-E2c83BB98B31',
         'name': 'sort',
@@ -79,7 +79,7 @@ export const Groups = [
     'id': 'F163FeC2-8189-DC1c-bFB5-c7b5eabCF604',
     'title': '格式转换器',
     'name': 'Converter',
-    'nodes': [
+    'items': [
       {
         'id': 'ccBE4edc-06ab-6Ab1-A54a-22Ff1A9a5aD0',
         'name': 'Yaml',

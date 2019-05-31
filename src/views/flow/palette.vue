@@ -6,14 +6,9 @@
       prefix-icon="el-icon-search"
     />
     <div class="scroll">
-      <el-collapse v-model="activeGroupIDs">
-        <el-collapse-item
-          v-for="group in filterGroups"
-          :key="group.id"
-          :title="group.title"
-          :name="group.id"
-        >
-          <palette-node v-for="node in group.nodes" :key="node.id" :data="node" />
+      <el-collapse v-model="activeTypeIds">
+        <el-collapse-item v-for="t in filterTypes" :key="t.id" :title="t.title" :name="t.id">
+          <palette-node v-for="item in t.items" :key="item.id" :data="item" />
         </el-collapse-item>
       </el-collapse>
     </div>
@@ -37,40 +32,40 @@ export default {
   },
   data() {
     return {
-      activeGroupIDs: [],
+      activeTypeIds: [],
       search: ''
     }
   },
   computed: {
     ...mapState({
-      groups: state => state.groups
+      types: state => state.types
     }),
-    filterGroups: function() {
+    filterTypes: function() {
       return this.search &&
-        this.groups.map(group => ({
-          ...group,
-          nodes: group.nodes.filter(node => node.name.includes(this.search))
+        this.types.map(it => ({
+          ...it,
+          nodes: it.nodes.filter(node => node.name.includes(this.search))
         })) ||
-        this.groups
+        this.types
     }
   },
   watch: {
     search(value) {
-      this.activeGroupIDs = this.filterGroups.map(g => g.id)
+      this.activeTypeIds = this.filterTypes.map(g => g.id)
     }
   },
   mounted() {
-    this.getGroups()
+    this.getTypes()
   },
   methods: {
     ...mapActions({
-      getGroups: 'getGroups'
+      getTypes: 'getTypes'
     }),
     openAll() {
-      this.activeGroupIDs = this.groups.map(g => g.id)
+      this.activeTypeIds = this.types.map(g => g.id)
     },
     closeAll() {
-      this.activeGroupIDs = []
+      this.activeTypeIds = []
     }
   }
 }

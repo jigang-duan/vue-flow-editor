@@ -182,18 +182,21 @@ export default {
     }
   },
   mounted() {
-    this.getProcessors()
+    this.getProcessGroup()
     this.mousedownPortType = null
     this.quickAddLink = null
     this.mousedownNode = null
   },
   methods: {
     ...mapActions({
-      getProcessors: 'getProcessors',
+      getProcessGroup: 'getProcessGroup',
       newProcessor: 'newProcessor',
       removeProcessors: 'removeProcessors',
-      cloneProcessors: 'cloneProcessors',
-      setActiveLinks: 'setRemoteLinks',
+      updateProcessors: 'updateProcessors',
+      newConnection: 'newConnection',
+      removeLinks: 'removeLinks',
+      clone: 'clone',
+
       addGroup: 'addGroup',
       ungroup: 'ungroup',
       removeGroups: 'removeGroups'
@@ -532,7 +535,9 @@ export default {
             }
           }
         })
-        this.setActiveLinks([...this.activeLinks, ...addedLinks])
+        if (addedLinks.length > 0) {
+          this.newConnection(addedLinks[0])
+        }
       }
 
       this.resetMouseVars()
@@ -541,6 +546,11 @@ export default {
     },
     nodeMouseUp({ event, d }) {
       if (d.id === this.mousedownNode.id) {
+        if (this.mouseMode === this.FLOW.state.MOVING_ACTIVE) {
+          if (this.movingNodes.length > 0) {
+            this.updateProcessors(this.movingNodes.map(n => n.n))
+          }
+        }
         this.mouseMode = this.FLOW.state.DEFAULT
         event.stopPropagation()
         return
@@ -659,27 +669,22 @@ export default {
     },
     async cloneNodes() {
       const ids = this.copySet.map(s => s.id)
-      const clones = await this.cloneProcessors(this.copySet)
-      this.movingSet = clones.map(it => ({ n: it }))
       const links = this.activeLinks.filter(line => (ids.includes(line.source.id) && ids.includes(line.target.id)))
-      const addlinks = links.map(l => {
-        const src = clones.find(c => c.cloneId === l.source.id)
-        const dst = clones.find(c => c.cloneId === l.target.id)
-        const srcPort = l.sourcePort
-        const linkId = `${src.id}:${srcPort}:${dst.id}`
-        return { id: linkId, source: src, sourcePort: srcPort, target: dst }
-      })
-      this.setActiveLinks([...this.activeLinks, ...addlinks])
+      const clones = await this.clone({ processors: this.copySet, links })
+      this.movingSet = clones.map(it => ({ n: it }))
       this.copySet = []
     },
     deleteNodesAndLines() {
       if (this.selectedLink) {
-        this.setActiveLinks(this.activeLinks.filter(line => line.id !== this.selectedLink.id))
+        this.removeLinks([this.selectedLink])
         this.selectedLink = null
       }
-      if (this.movingSet && this.movingSet.length) {
+      if (this.movingNodes && this.movingNodes.length) {
         const ids = this.movingNodes.map(s => s.n.id)
-        this.setActiveLinks(this.activeLinks.filter(line => !(ids.includes(line.source.id) || ids.includes(line.target.id))))
+        const rmLinks = this.activeLinks.filter(l => ids.includes(l.source.id) || ids.includes(l.target.id))
+        if (rmLinks.length > 0) {
+          this.removeLinks(rmLinks)
+        }
         this.removeProcessors(this.movingNodes.map(it => it.n))
         this.movingSet = []
         this.copySet = []
