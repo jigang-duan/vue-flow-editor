@@ -44,7 +44,7 @@ export default {
       return this.search &&
         this.types.map(it => ({
           ...it,
-          nodes: it.nodes.filter(node => node.name.includes(this.search))
+          items: it.items.filter(it => it.name.toLowerCase().includes(this.search.toLowerCase()))
         })) ||
         this.types
     }

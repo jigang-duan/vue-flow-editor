@@ -212,9 +212,11 @@ export default {
     }),
     drop(event) {
       const { typeId, x, y } = nodeInfoByEvent(event)
-      const maxX = this.spaceWidth
-      const maxY = this.spaceHeight
-      this.newProcessor({ typeId, x, y, maxX, maxY })
+      if (typeId) {
+        const maxX = this.spaceWidth
+        const maxY = this.spaceHeight
+        this.newProcessor({ typeId, x, y, maxX, maxY })
+      }
     },
     async tarbarAction(name) {
       if (name === 'delete') {

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <github-corner />
+    <github-corner v-if="false" />
     <layout>
       <workspace slot="workspace" />
       <palette slot="palette" />
