@@ -1,11 +1,11 @@
 import {
   fetchProcessGroup,
   createProcessor,
-  updateContent,
+  UpdateSnippet,
   createConnection,
-  clone,
+  cloneSnippet,
   addGroup,
-  deleteContent
+  deleteSnippet
   // ungroup
 } from '@/api/flow'
 
@@ -31,21 +31,21 @@ const actions = {
     const updated = await createProcessor(typeId, { x, y, maxX, maxY })
     commit('SET_PROCESS_GROUP', updated)
   },
-  async updateContent({ state, commit }, payload) {
+  async UpdateSnippet({ state, commit }, payload) {
     const processors = state.processors.filter(p => payload.processors.includes(p.id))
     const groups = state.groups.filter(p => payload.groups.includes(p.id))
-    const updated = await updateContent({ processors, groups })
+    const updated = await UpdateSnippet({ processors, groups })
     commit('SET_PROCESS_GROUP', updated)
   },
   async newConnection({ commit }, link) {
     const updated = await createConnection(link)
     commit('SET_PROCESS_GROUP', updated)
   },
-  async clone({ state, commit }, payload) {
+  async cloneSnippet({ state, commit }, payload) {
     const oldids = state.processors.map(p => p.id)
     const processors = state.processors.filter(p => payload.processors.includes(p.id))
     const links = state.links.filter(l => payload.links.includes(l.id))
-    const updated = await clone({ processors, links })
+    const updated = await cloneSnippet({ processors, links })
     commit('SET_PROCESS_GROUP', updated)
     return updated.processors.filter(p => !oldids.includes(p.id)).map(p => p.id)
   },
@@ -55,8 +55,8 @@ const actions = {
     const updated = await addGroup({ processors, links })
     commit('SET_PROCESS_GROUP', updated)
   },
-  async remvoeContent({ commit }, { processors, links, groups }) {
-    const updated = await deleteContent({ processors, links, groups })
+  async remvoeSnippet({ commit }, { processors, links, groups }) {
+    const updated = await deleteSnippet({ processors, links, groups })
     commit('SET_PROCESS_GROUP', updated)
   },
 

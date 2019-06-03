@@ -70,9 +70,9 @@ export const createProcessor = async(typeId, { x, y, maxX, maxY }, groupId = 'ro
   return mapProcessGroup(processGroup)
 }
 
-export const updateContent = async({ processors, groups }, groupId = 'root') => {
+export const UpdateSnippet = async({ processors, groups }, groupId = 'root') => {
   const processGroup = await request({
-    url: `${BaseURL}/process-groups/${groupId}/content`,
+    url: `${BaseURL}/process-groups/${groupId}/snippet`,
     method: 'put',
     data: {
       processors,
@@ -95,10 +95,10 @@ export const createConnection = async({ source, sourcePort, target }, groupId = 
   return mapProcessGroup(processGroup)
 }
 
-export const clone = async({ processors, links }, groupId = 'root') => {
+export const cloneSnippet = async({ processors, links }, groupId = 'root') => {
   const processGroup = await request({
-    url: `${BaseURL}/process-groups/${groupId}/clone`,
-    method: 'put',
+    url: `${BaseURL}/process-groups/${groupId}/snippet`,
+    method: 'post',
     data: {
       processors,
       connections: links
@@ -119,9 +119,9 @@ export const addGroup = async({ processors, links }, groupId = 'root') => {
   return mapProcessGroup(processGroup)
 }
 
-export const deleteContent = async({ processors, links, groups }, groupId = 'root') => {
+export const deleteSnippet = async({ processors, links, groups }, groupId = 'root') => {
   const processGroup = await request({
-    url: `${BaseURL}/process-groups/${groupId}/content`,
+    url: `${BaseURL}/process-groups/${groupId}/snippet`,
     method: 'delete',
     data: {
       processors,

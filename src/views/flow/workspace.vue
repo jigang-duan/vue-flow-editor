@@ -195,10 +195,10 @@ export default {
     ...mapActions({
       getProcessGroup: 'getProcessGroup',
       newProcessor: 'newProcessor',
-      updateContent: 'updateContent',
+      UpdateSnippet: 'UpdateSnippet',
       newConnection: 'newConnection',
-      clone: 'clone',
-      remvoeContent: 'remvoeContent',
+      cloneSnippet: 'cloneSnippet',
+      remvoeSnippet: 'remvoeSnippet',
 
       addGroup: 'addGroup',
       ungroup: 'ungroup'
@@ -212,7 +212,7 @@ export default {
     async tarbarAction(name) {
       if (name === 'delete') {
         if (this.selectedLink) {
-          this.remvoeContent({ links: [this.selectedLink] })
+          this.remvoeSnippet({ links: [this.selectedLink] })
           this.selectedLink = null
           return
         }
@@ -229,7 +229,7 @@ export default {
         if (this.movingSet && this.movingSet.length) {
           groups = this.movingGroups.map(s => s.g)
         }
-        this.remvoeContent({ processors, links, groups })
+        this.remvoeSnippet({ processors, links, groups })
       } else if (name === 'copy') {
         this.copySet = this.movingNodes.map(it => it.n)
       } else if (name === 'paste') {
@@ -566,7 +566,7 @@ export default {
           if (this.movingNodes.length > 0) {
             const processors = this.movingNodes.map(n => n.n)
             const groups = this.movingGroups.map(n => n.g)
-            this.updateContent({ processors, groups })
+            this.UpdateSnippet({ processors, groups })
           }
         }
         this.mouseMode = this.FLOW.state.DEFAULT
@@ -623,7 +623,7 @@ export default {
           if (this.movingGroups.length > 0) {
             const processors = this.movingNodes.map(n => n.n)
             const groups = this.movingGroups.map(n => n.g)
-            this.updateContent({ processors, groups })
+            this.UpdateSnippet({ processors, groups })
           }
         }
         this.mouseMode = this.FLOW.state.DEFAULT
@@ -689,7 +689,7 @@ export default {
     async cloneNodes() {
       const ids = this.copySet
       const links = this.links.filter(line => ids.includes(line.source) && ids.includes(line.target)).map(l => l.id)
-      const clones = await this.clone({ processors: ids, links })
+      const clones = await this.cloneSnippet({ processors: ids, links })
       this.movingSet = clones.map(it => ({ n: it }))
       this.copySet = []
     },
