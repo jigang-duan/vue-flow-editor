@@ -2,6 +2,11 @@
 
 > Vue + Svg 实现的flow可视化编辑器。
 
+> 说明:
+UI 参考 node-red
+[mock server](https://github.com/jigang-duan/flow-editor-mock.git)
+静态版本在static分支(不依赖server,只是为了展示)
+
 ## Build Setup
 
 ```bash
@@ -59,3 +64,5 @@ Modern browsers and Internet Explorer 10+.
 | IE10, IE11, Edge| last 2 versions| last 2 versions| last 2 versions
 
 ## License
+
+[MIT](http://opensource.org/licenses/MIT)
