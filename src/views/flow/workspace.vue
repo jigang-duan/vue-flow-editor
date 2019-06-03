@@ -85,7 +85,7 @@
     </div>
     <footer>
       <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
-        <el-breadcrumb-item :to="{ path: '/flow' }">flow</el-breadcrumb-item>
+        <el-breadcrumb-item v-for="breadcrumb in breadcrumbs" :key="breadcrumb" :to="{ path: `/flow?id=${breadcrumb}` }">{{ breadcrumb }}</el-breadcrumb-item>
       </el-breadcrumb>
       <div class="footer-buttons">
         <el-button class="mini" icon="el-icon-zoom-out" @click="scale -= 0.1" />
@@ -156,7 +156,8 @@ export default {
     ...mapState({
       processors: state => state.processors,
       links: state => state.links,
-      groups: state => state.groups
+      groups: state => state.groups,
+      breadcrumbs: state => state.flowGroupIDs
     }),
     lines() {
       return computeLine(this.links, this.processors)
@@ -172,17 +173,23 @@ export default {
       const canCopy = !!(this.movingSet && this.movingNodes.length)
       const canPaste = !!(this.copySet && this.copySet.length)
       const addGroup = this.canAddGroup()
-      const ungroup = !!(this.movingSet && this.movingGroups.length)
+      const ungroup = !!(this.movingSet && (this.movingGroups.length === 1))
       return {
         copy: canCopy,
         paste: canPaste,
         delete: canDelete,
         addGroup,
-        ungroup
+        ungroup,
+        enterGroup: ungroup
       }
     },
     dragLineNode() {
       return this.dragLine && this.processors.find(p => p.id === this.dragLine.node)
+    }
+  },
+  watch: {
+    '$route.query': function(to, from) {
+      this.enterGroup(to.id)
     }
   },
   mounted() {
@@ -199,9 +206,9 @@ export default {
       newConnection: 'newConnection',
       cloneSnippet: 'cloneSnippet',
       remvoeSnippet: 'remvoeSnippet',
-
       addGroup: 'addGroup',
-      ungroup: 'ungroup'
+      ungroup: 'ungroup',
+      enterGroup: 'enterGroup'
     }),
     drop(event) {
       const { typeId, x, y } = nodeInfoByEvent(event)
@@ -242,8 +249,15 @@ export default {
         this.addGroup({ processors: ids, links })
         this.movingSet = []
       } else if (name === 'ungroup') {
-        const groups = this.movingSet.map(it => it.g)
-        this.ungroup(groups)
+        this.ungroup(this.movingGroups[0].g)
+      } else if (name === 'enterGroup') {
+        const id = this.movingGroups[0].g
+        this.resetMouseVars()
+        this.movingSet = []
+        this.copySet = []
+        this.selectedLink = null
+        // this.enterGroup(id)
+        this.$router.push({ path: '/flow', query: { id }})
       }
     },
     linkMousedown(event, line) {

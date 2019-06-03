@@ -46,6 +46,10 @@ export default {
               {
                 label: '取消组',
                 name: 'ungroup'
+              },
+              {
+                label: '进入组',
+                name: 'enterGroup'
               }
             ]
           }
@@ -60,7 +64,8 @@ export default {
           paste: false,
           delete: false,
           addGroup: false,
-          ungroup: false
+          ungroup: false,
+          enterGroup: false
         }
       }
     }
