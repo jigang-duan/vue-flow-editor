@@ -24,6 +24,14 @@ import '@/permission' // permission control
  * mockXHR()
  */
 
+// form-create
+// ElementUI
+import formCreate from 'form-create/element'
+// 获取生成器
+// import { maker } from 'form-create/element'
+// 三级联动数据,不用可以不引入
+import 'form-create/district/province_city_area.js'
+
 // Flow
 import flow from '@flow/constants'
 
@@ -31,6 +39,7 @@ Vue.prototype.FLOW = flow
 
 // set ElementUI lang to EN
 Vue.use(ElementUI, { locale })
+Vue.use(formCreate)
 
 Vue.config.productionTip = false
 

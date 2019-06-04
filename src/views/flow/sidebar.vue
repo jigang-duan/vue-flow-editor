@@ -5,7 +5,7 @@
         <info-content />
       </tab-pane>
       <tab-pane name="config" label="配置" icon="settings">
-        ...
+        <node-settings />
       </tab-pane>
     </tabs>
     <footer />
@@ -13,14 +13,15 @@
 </template>
 
 <script>
-import { Tabs, TabPane, InfoContent } from './components'
+import { Tabs, TabPane, InfoContent, NodeSettings } from './components'
 
 export default {
   name: 'FlowSidebar',
   components: {
     Tabs,
     TabPane,
-    InfoContent
+    InfoContent,
+    NodeSettings
   },
   data() {
     return {
