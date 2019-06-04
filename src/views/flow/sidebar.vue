@@ -2,7 +2,7 @@
   <div class="flow-sidebar">
     <tabs v-model="tab">
       <tab-pane name="info" label="信息" icon="info">
-        ...
+        <info-content />
       </tab-pane>
       <tab-pane name="config" label="配置" icon="settings">
         ...
@@ -13,13 +13,14 @@
 </template>
 
 <script>
-import { Tabs, TabPane } from './components'
+import { Tabs, TabPane, InfoContent } from './components'
 
 export default {
   name: 'FlowSidebar',
   components: {
     Tabs,
-    TabPane
+    TabPane,
+    InfoContent
   },
   data() {
     return {

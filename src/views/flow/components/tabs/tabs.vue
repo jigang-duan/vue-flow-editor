@@ -180,6 +180,13 @@ export default {
         }
       }
     }
-
+    .tabs__content {
+      position: absolute;
+      top: 35px;
+      right: 0;
+      bottom: 25px;
+      left: 0px;
+      overflow-y: auto;
+    }
   }
 </style>
