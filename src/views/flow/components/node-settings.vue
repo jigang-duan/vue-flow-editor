@@ -27,7 +27,7 @@ export default {
           'options': [
             {
               'value': '1',
-              'label': '好用',
+              'label': '',
               'disabled': false
             }
           ]
@@ -50,7 +50,7 @@ export default {
           vm.fApi.setValue({ 'name': 'fdsfdsfd' })
         },
         form: {
-          inline: true,
+          inline: false,
           labelPosition: 'right',
           labelSuffix: undefined,
           hideRequiredAsterisk: false,
@@ -60,11 +60,11 @@ export default {
           statusIcon: false,
           validateOnRuleChange: true,
           disabled: false,
-          size: 'mini' // medium / small / mini
+          size: 'small' // medium / small / mini
         },
         submitBtn: {
           type: undefined,
-          size: 'mini',
+          size: 'small',
           plain: true,
           round: false,
           circle: false,
@@ -97,7 +97,7 @@ export default {
 
 .node-settings {
   .form-create {
-    padding: 4px;
+    padding: 8px;
   }
 }
 </style>

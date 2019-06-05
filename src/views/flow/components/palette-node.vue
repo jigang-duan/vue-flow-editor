@@ -7,7 +7,7 @@
     @dragstart="dragstart"
     @dragend="dragend"
   >
-    <div class="label" :class="{'label_right': data.iconOnRight}">{{ data.name }}</div>
+    <span class="label" :class="{'label_right': data.iconOnRight}">{{ $t(data.name) }}</span>
     <div class="icon_container" :class="{'icon_container_right': data.iconOnRight}">
       <img :src="data.icon" class="icon">
     </div>
@@ -65,7 +65,7 @@ export default {
     border: 1px solid #999;
     background-position: 5% 50%;
     background-repeat: no-repeat;
-    width: 120px;
+    width: $palette-width - 40px;
     background-size: contain;
     position: relative;
     &:hover {

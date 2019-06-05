@@ -1,6 +1,5 @@
 
 const state = {
-  editor: {}
 }
 
 const mutations = {

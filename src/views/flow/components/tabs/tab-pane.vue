@@ -16,9 +16,12 @@ export default {
   name: 'TabPane',
   componentName: 'TabPane',
   props: {
-    label: String,
-    labelContent: Function,
-    name: String,
+    // label: String,
+    // labelContent: Function,
+    name: {
+      type: String,
+      default: ''
+    },
     closable: Boolean,
     disabled: Boolean,
     lazy: Boolean,

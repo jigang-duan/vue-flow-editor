@@ -119,7 +119,7 @@ export default {
     position: absolute;
     margin: 0;
     top: 0px;
-    left: 179px;
+    left: $palette-width - 1px;
     bottom: 0px;
     right: 322px;
     overflow: hidden;
@@ -133,7 +133,7 @@ export default {
     bottom: 0px;
     left:0px;
     background: #f3f3f3;
-    width: 180px;
+    width: $palette-width;
     text-align: center;
     user-select: none;
     @include component-border;

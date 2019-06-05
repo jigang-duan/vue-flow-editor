@@ -1,13 +1,4 @@
-import {
-  fetchProcessGroup,
-  createProcessor,
-  UpdateSnippet,
-  createConnection,
-  cloneSnippet,
-  addGroup,
-  deleteSnippet,
-  ungroup
-} from '@/api/flow'
+import * as fApi from '@/api/flow'
 
 const state = {
   processors: [],
@@ -37,23 +28,23 @@ const mutations = {
 const actions = {
   async getProcessGroup({ commit, getters }) {
     const { flowGroupId } = getters
-    commit('SET_PROCESS_GROUP', await fetchProcessGroup(flowGroupId))
+    commit('SET_PROCESS_GROUP', await fApi.fetchProcessGroup(flowGroupId))
   },
   async newProcessor({ commit, getters }, { typeId, x, y, maxX, maxY }) {
     const { flowGroupId } = getters
-    const updated = await createProcessor(typeId, { x, y, maxX, maxY }, flowGroupId)
+    const updated = await fApi.createProcessor(typeId, { x, y, maxX, maxY }, flowGroupId)
     commit('SET_PROCESS_GROUP', updated)
   },
   async UpdateSnippet({ getters, commit, state }, payload) {
     const { flowGroupId } = getters
     const processors = state.processors.filter(p => payload.processors.includes(p.id))
     const groups = state.groups.filter(p => payload.groups.includes(p.id))
-    const updated = await UpdateSnippet({ processors, groups }, flowGroupId)
+    const updated = await fApi.UpdateSnippet({ processors, groups }, flowGroupId)
     commit('SET_PROCESS_GROUP', updated)
   },
   async newConnection({ commit, getters }, link) {
     const { flowGroupId } = getters
-    const updated = await createConnection(link, flowGroupId)
+    const updated = await fApi.createConnection(link, flowGroupId)
     commit('SET_PROCESS_GROUP', updated)
   },
   async cloneSnippet({ state, commit, getters }, payload) {
@@ -61,7 +52,7 @@ const actions = {
     const oldids = state.processors.map(p => p.id)
     const processors = state.processors.filter(p => payload.processors.includes(p.id))
     const links = state.links.filter(l => payload.links.includes(l.id))
-    const updated = await cloneSnippet({ processors, links }, flowGroupId)
+    const updated = await fApi.cloneSnippet({ processors, links }, flowGroupId)
     commit('SET_PROCESS_GROUP', updated)
     return updated.processors.filter(p => !oldids.includes(p.id)).map(p => p.id)
   },
@@ -69,17 +60,17 @@ const actions = {
     const { flowGroupId } = getters
     const processors = state.processors.filter(p => payload.processors.includes(p.id))
     const links = state.links.filter(link => payload.links.includes(link.id))
-    const updated = await addGroup({ processors, links }, flowGroupId)
+    const updated = await fApi.addGroup({ processors, links }, flowGroupId)
     commit('SET_PROCESS_GROUP', updated)
   },
   async remvoeSnippet({ commit, getters }, { processors, links, groups }) {
     const { flowGroupId } = getters
-    const updated = await deleteSnippet({ processors, links, groups }, flowGroupId)
+    const updated = await fApi.deleteSnippet({ processors, links, groups }, flowGroupId)
     commit('SET_PROCESS_GROUP', updated)
   },
   async ungroup({ dispatch, commit, getters }, groupID) {
     const { flowGroupId } = getters
-    const updated = await ungroup(groupID, flowGroupId)
+    const updated = await fApi.ungroup(groupID, flowGroupId)
     commit('SET_PROCESS_GROUP', updated)
   },
   async enterGroup({ dispatch, commit, state }, groupID) {
