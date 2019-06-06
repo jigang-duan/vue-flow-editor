@@ -20,15 +20,19 @@ const mutations = {
     state.links = links
     state.groups = groups
   },
-  SET_CUR_GROUP: (state, id) => {
-    state.flowGroupIDs = id
+  SET_CUR_GROUP: (state, ids) => {
+    state.flowGroupIDs = ids
   }
 }
 
 const actions = {
   async getProcessGroup({ commit, getters }) {
     const { flowGroupId } = getters
-    commit('SET_PROCESS_GROUP', await fApi.fetchProcessGroup(flowGroupId))
+    const updated = await fApi.fetchProcessGroup(flowGroupId)
+    commit('SET_PROCESS_GROUP', updated)
+    if (flowGroupId === 'root') {
+      commit('SET_CUR_GROUP', [updated.id])
+    }
   },
   async newProcessor({ commit, getters }, { typeId, x, y, maxX, maxY }) {
     const { flowGroupId } = getters

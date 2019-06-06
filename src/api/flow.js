@@ -27,14 +27,15 @@ const mapProcessor = (p) => {
 }
 
 const mapProcessGroup = processGroup => {
-  const { processors, connections, processGroups } = processGroup || {}
+  const { id, processors, connections, processGroups } = processGroup || {}
   const ps = processors && processors.map(mapProcessor) || []
   const links = connections || []
   const groups = processGroups && processGroups.map(g => ({ ...g, count: g.processors && g.processors.length || 0 })) || []
   return {
     processors: ps,
     links,
-    groups
+    groups,
+    id
   }
 }
 

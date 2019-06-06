@@ -190,6 +190,20 @@ export default {
   watch: {
     '$route.query': function(to, from) {
       this.enterGroup(to.id)
+    },
+    'selectedLink': function(newValue, oldValue) {
+      if (newValue && newValue !== oldValue) {
+        console.info(newValue)
+      }
+    },
+    'movingSet': function(newValue, oldValue) {
+      if (newValue && (newValue.length === 1) && newValue !== oldValue) {
+        if (newValue[0].n) {
+          console.info(newValue[0].n)
+        } else if (newValue[0].g) {
+          console.info(newValue[0].g)
+        }
+      }
     }
   },
   mounted() {
