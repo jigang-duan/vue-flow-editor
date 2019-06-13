@@ -20,6 +20,7 @@
     "axios": "0.18.0",
     "element-ui": "2.7.2",
     "form-create": "^1.6.5",
+    "gsap": "^2.1.2",
     "js-cookie": "2.2.0",
     "lodash": "^4.17.11",
     "normalize.css": "7.0.0",

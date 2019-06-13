@@ -83,6 +83,7 @@
         </g>
       </svg>
     </div>
+    <Menu @menu-action="menuAction" />
     <footer>
       <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
         <el-breadcrumb-item v-for="breadcrumb in breadcrumbs" :key="breadcrumb" :to="{ path: `/flow?id=${breadcrumb}` }">{{ breadcrumb }}</el-breadcrumb-item>
@@ -108,7 +109,7 @@ import {
   getAllFlowNodes,
   computeLine
 } from './utils'
-import { FlowGrid, FlowNode, FlowGroup, Tarbar } from './components'
+import { FlowGrid, FlowNode, FlowGroup, Tarbar, Menu } from './components'
 
 const { mapState, mapActions } = createNamespacedHelpers('flow/chat')
 
@@ -118,7 +119,8 @@ export default {
     FlowGrid,
     FlowNode,
     FlowGroup,
-    Tarbar
+    Tarbar,
+    Menu
   },
   filters: {
     LinkPath: function({ source, target }) {
@@ -272,8 +274,19 @@ export default {
         this.movingSet = []
         this.copySet = []
         this.selectedLink = null
-        // this.enterGroup(id)
         this.$router.push({ path: '/flow', query: { id }})
+      }
+    },
+    menuAction(name) {
+      if (name === 'reply') {
+        if (this.breadcrumbs.length >= 2) {
+          const id = this.breadcrumbs[this.breadcrumbs.length - 2]
+          this.resetMouseVars()
+          this.movingSet = []
+          this.copySet = []
+          this.selectedLink = null
+          this.$router.push({ path: '/flow', query: { id }})
+        }
       }
     },
     linkMousedown(event, line) {
