@@ -708,10 +708,10 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@hapi/hoek@^6.2.1":
-  version "6.2.1"
-  resolved "https://registry.npm.taobao.org/@hapi/hoek/download/@hapi/hoek-6.2.1.tgz#d3a66329159af879bfdf0b0cff2229c43c5a3451"
-  integrity sha1-06ZjKRWa+Hm/3wsM/yIpxDxaNFE=
+"@hapi/hoek@^9.0.4":
+  version "9.0.4"
+  resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-9.0.4.tgz#e80ad4e8e8d2adc6c77d985f698447e8628b6010"
+  integrity sha512-EwaJS7RjoXUZ2cXXKZZxZqieGtc7RbvQhUy8FwDoMQtxWVi14tFjeFCYPZAM1mBCpOpiBpyaZbb9NeHc7eGKgw==
 
 "@intervolga/optimize-cssnano-plugin@^1.0.5":
   version "1.0.6"
